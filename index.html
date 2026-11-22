@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FileKit — Kompres, Gabung, &amp; Konversi File Tanpa Batas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <!-- ================= NAVBAR ================= -->
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <div class="navbar-left">
+        <a href="index.php" class="brand" aria-label="Beranda FileKit">
+          <span class="brand-icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+              <rect x="2" y="2" width="11" height="11" rx="3" fill="#2A2A8C"/>
+              <rect x="15" y="2" width="11" height="11" rx="3" fill="#0EA5E9"/>
+              <rect x="2" y="15" width="11" height="11" rx="3" fill="#F43F5E"/>
+              <rect x="15" y="15" width="11" height="11" rx="3" fill="#F59E0B"/>
+            </svg>
+          </span>
+          <span class="brand-text">FileKit</span>
+        </a>
+      </div>
+
+      <div class="navbar-right">
+        <button type="button" class="hamburger" id="hamburgerBtn" aria-label="Buka menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Menu Mobile -->
+    <div class="mobile-menu is-hidden" id="mobileMenu">
+      <a href="#app-workspace" data-jump-tab="compress">Kompres File</a>
+      <a href="#app-workspace" data-jump-tab="merge">Gabung PDF</a>
+      <a href="#app-workspace" data-jump-tab="convert">Konversi File</a>
+      <a href="#kenapa-kami">Kenapa Pilih Kami</a>
+      <a href="#faq">Bantuan &amp; FAQ</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- ================= HERO SECTION ================= -->
+    <section class="hero">
+      <div class="container hero-inner">
+        <h1 class="hero-title">
+          Kompres, Gabung, &amp; Konversi<br>
+          File Tanpa Batas.
+        </h1>
+        <p class="hero-subtitle">
+          Proses file PDF, gambar, dan dokumen langsung di browser kamu. Tanpa batas kuota harian, tanpa daftar, tanpa upload ke server.
+        </p>
+        <div class="hero-actions">
+          <a href="#app-workspace" class="btn btn-primary">Mulai Sekarang</a>
+          <a href="#kenapa-kami" class="btn btn-outline">Lihat Fitur</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= AREA APLIKASI (MOCKUP EDITOR) ================= -->
+    <section class="app-section" id="app-workspace">
+      <div class="container">
+        <div class="app-window">
+          <!-- Toolbar Atas -->
+          <div class="app-toolbar">
+            <div class="window-dots" aria-hidden="true">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+
+            <div class="app-tabs" role="tablist" aria-label="Pilih alat FileKit">
+              <button type="button" class="app-tab is-active" role="tab" aria-selected="true" data-tab="compress">
+                Kompres
+              </button>
+              <button type="button" class="app-tab" role="tab" aria-selected="false" data-tab="merge">
+                Gabung PDF
+              </button>
+              <button type="button" class="app-tab" role="tab" aria-selected="false" data-tab="convert">
+                Konversi
+              </button>
+            </div>
+
+            <div class="toolbar-status">100% Lokal di Browser</div>
+          </div>
+
+          <!-- Isi Jendela Aplikasi -->
+          <div class="app-body">
+            <div class="tool-intro">
+              <h2 id="toolHeading">Kompres Gambar &amp; PDF</h2>
+              <p id="toolSubheading">Kecilkan ukuran file JPG, PNG, WebP, atau PDF langsung di perangkatmu.</p>
+            </div>
+
+            <!-- Area Drag & Drop -->
+            <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Tarik dan lepas file di sini atau klik untuk memilih">
+              <div class="dropzone-icon" aria-hidden="true">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <p class="dropzone-text">Tarik &amp; lepas file di sini atau klik untuk memilih</p>
+              <p class="dropzone-hint" id="dropzoneHint">Mendukung JPG, PNG, WebP, dan PDF</p>
+              <span class="btn btn-outline btn-sm">Pilih File</span>
+              <input type="file" id="fileInput" class="sr-only">
+            </div>
+
+            <!-- Opsi Tab: KOMPRES -->
+            <div id="optionsCompress" class="tool-options">
+              <div class="option-group">
+                <label for="compressQuality">
+                  Kualitas Kompresi: <strong id="compressQualityVal">75%</strong>
+                </label>
+                <input type="range" id="compressQuality" min="10" max="100" value="75">
+                <span class="option-note">Nilai lebih rendah menghasilkan ukuran file lebih kecil.</span>
+              </div>
+            </div>
+
+            <!-- Opsi Tab: GABUNG PDF -->
+            <div id="optionsMerge" class="tool-options is-hidden">
+              <div class="option-group">
+                <span class="option-note">Pilih 2 atau lebih file PDF (atau kumpulan gambar JPG/PNG/WebP untuk digabung menjadi 1 PDF). Geser atau gunakan tombol Naik/Turun untuk mengatur urutan.</span>
+              </div>
+            </div>
+
+            <!-- Opsi Tab: KONVERSI -->
+            <div id="optionsConvert" class="tool-options is-hidden">
+              <div class="option-group">
+                <label for="convertTarget">Format Tujuan</label>
+                <select id="convertTarget">
+                  <option value="pdf">Gambar ke PDF (1 dokumen A4)</option>
+                  <option value="jpg">PDF atau Gambar ke JPG</option>
+                  <option value="png">PDF atau Gambar ke PNG</option>
+                  <option value="webp">Gambar ke WebP</option>
+                </select>
+                <span class="option-note">Jika mengonversi PDF lebih dari 1 halaman ke gambar, hasil otomatis dibungkus ke file ZIP.</span>
+              </div>
+            </div>
+
+            <!-- Daftar File Terpilih -->
+            <ul id="fileList" class="file-list is-hidden" aria-live="polite"></ul>
+
+            <!-- Progress Bar -->
+            <div id="progressArea" class="progress-area is-hidden">
+              <div class="progress-track">
+                <div id="progressBar" class="progress-bar"></div>
+              </div>
+              <p id="progressText" class="progress-text">Memproses file...</p>
+            </div>
+
+            <!-- Pesan Error -->
+            <div id="errorBox" class="alert-error is-hidden" role="alert"></div>
+
+            <!-- Tombol Aksi -->
+            <div class="app-actions">
+              <button type="button" id="clearBtn" class="btn btn-outline btn-sm is-hidden">Kosongkan</button>
+              <button type="button" id="actionBtn" class="btn btn-primary" disabled>Kompres Sekarang</button>
+            </div>
+
+            <!-- Area Hasil & Unduh -->
+            <div id="resultBox" class="result-box is-hidden" aria-live="polite">
+              <div class="result-info">
+                <strong id="resultTitle">Proses selesai</strong>
+                <p id="resultMeta"></p>
+              </div>
+              <a id="downloadBtn" href="#" class="btn btn-primary">Unduh Hasil</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= KENAPA PILIH KAMI ================= -->
+    <section class="features-section" id="kenapa-kami">
+      <div class="container">
+        <div class="section-header">
+          <h2>Kenapa Pilih Kami</h2>
+          <p>Dirancang agar pekerjaan dokumen selesai cepat tanpa hambatan kuota maupun kekhawatiran privasi.</p>
+        </div>
+
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z"/>
+              </svg>
+            </div>
+            <h3>Tanpa Batas Kuota</h3>
+            <p>Olah sebanyak mungkin file setiap hari. Tidak ada batasan dua file per hari atau penghitung mundur yang mengganggu.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <h3>File Tidak Diupload ke Server</h3>
+            <p>Seluruh kompresi, penggabungan, dan konversi berjalan langsung di memori browser perangkatmu sehingga dokumen tetap aman.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <h3>Gratis &amp; Tanpa Login</h3>
+            <p>Langsung buka halaman, pilih file, dan unduh hasilnya tanpa perlu membuat akun, verifikasi email, atau berlangganan.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FAQ ACCORDION ================= -->
+    <section class="faq-section" id="faq">
+      <div class="container faq-container">
+        <div class="section-header">
+          <h2>Pertanyaan yang Sering Diajukan</h2>
+          <p>Jawaban singkat seputar cara kerja, privasi, dan batas pemrosesan di FileKit.</p>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item">
+            <button type="button" class="faq-question" aria-expanded="false">
+              <span>Apakah file saya benar-benar tidak dikirim ke server?</span>
+              <span class="faq-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer is-hidden">
+              <p>Benar. FileKit memproses gambar dan PDF langsung di browser menggunakan JavaScript (Canvas API, pdf-lib, pdf.js, dan JSZip). File tidak pernah meninggalkan perangkatmu.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button type="button" class="faq-question" aria-expanded="false">
+              <span>Apakah ada batas jumlah file harian?</span>
+              <span class="faq-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer is-hidden">
+              <p>Tidak ada batas harian. Kamu bisa mengompres, menggabungkan, dan mengonversi file sebanyak yang dibutuhkan selama memori perangkatmu mencukupi.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button type="button" class="faq-question" aria-expanded="false">
+              <span>Format file apa saja yang didukung?</span>
+              <span class="faq-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer is-hidden">
+              <p>Saat ini FileKit mendukung gambar JPG, PNG, WebP, serta dokumen PDF untuk kompresi, penggabungan, dan konversi antarformat.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button type="button" class="faq-question" aria-expanded="false">
+              <span>Kenapa teks di PDF hasil kompresi ekstrem tidak bisa disalin?</span>
+              <span class="faq-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer is-hidden">
+              <p>Untuk mengecilkan ukuran PDF secara signifikan di browser tanpa server, tiap halaman dirender ulang menjadi gambar terkompresi lalu disusun kembali ke dalam PDF baru.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button type="button" class="faq-question" aria-expanded="false">
+              <span>Apakah saya perlu mendaftar akun untuk mengunduh hasil?</span>
+              <span class="faq-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer is-hidden">
+              <p>Tidak perlu. Semua fitur langsung terbuka tanpa login dan tanpa watermark pada file hasil.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="footer-copy">&copy; 2026 FileKit. Semua proses berjalan di browser perangkatmu.</p>
+      <div class="footer-links">
+        <a href="#app-workspace" data-jump-tab="compress">Kompres</a>
+        <a href="#app-workspace" data-jump-tab="merge">Gabung PDF</a>
+        <a href="#app-workspace" data-jump-tab="convert">Konversi</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= TOAST PRIVASI ================= -->
+  <div class="privacy-toast" id="privacyToast" role="status">
+    <span>Semua file diproses di perangkatmu. Privasi aman.</span>
+    <button type="button" id="closeToastBtn" class="toast-close" aria-label="Tutup pemberitahuan">&times;</button>
+  </div>
+
+  <script src="assets/js/filekit.js" defer></script>
+</body>
+</html>
