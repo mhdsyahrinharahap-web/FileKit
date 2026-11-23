@@ -158,7 +158,32 @@ body {
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
+}
+
+.nav-dev-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-dev-link:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.nav-dev-link .dev-handle {
+  font-weight: 600;
 }
 
 .hamburger {
@@ -783,10 +808,32 @@ body {
   gap: 16px;
 }
 
+.footer-brand-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .footer-copy {
   margin: 0;
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+.footer-dev {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.footer-dev a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.footer-dev a:hover {
+  text-decoration: underline;
 }
 
 .footer-links {
@@ -857,6 +904,10 @@ body {
 }
 
 @media (max-width: 640px) {
+  .nav-dev-link .dev-handle {
+    display: none;
+  }
+
   .hero {
     padding: 48px 0 36px;
   }
