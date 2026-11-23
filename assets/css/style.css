@@ -43,7 +43,7 @@ body {
 
 .container {
   width: 100%;
-  max-width: 1080px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -155,88 +155,10 @@ body {
   letter-spacing: -0.02em;
 }
 
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.nav-item {
-  background: none;
-  border: none;
-  padding: 6px 0;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-decoration: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: color 0.15s ease;
-}
-
-.nav-item:hover {
-  color: var(--text-primary);
-}
-
-.chevron {
-  font-size: 0.8rem;
-  line-height: 1;
-}
-
-.nav-dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  min-width: 210px;
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  padding: 6px;
-  display: none;
-  flex-direction: column;
-  z-index: 50;
-}
-
-.nav-dropdown.is-open .dropdown-menu {
-  display: flex;
-}
-
-.dropdown-menu a {
-  padding: 9px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.dropdown-menu a:hover {
-  background: var(--bg-subtle);
-  color: var(--accent);
-}
-
 .navbar-right {
   display: flex;
   align-items: center;
   gap: 18px;
-}
-
-.nav-signin {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-decoration: none;
-}
-
-.nav-signin:hover {
-  color: var(--text-primary);
 }
 
 .hamburger {
@@ -267,7 +189,7 @@ body {
   padding: 16px 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .mobile-menu a:not(.btn) {
@@ -276,10 +198,6 @@ body {
   font-size: 0.95rem;
   font-weight: 500;
   padding: 6px 0;
-}
-
-.mobile-menu-actions {
-  padding-top: 8px;
 }
 
 /* ================= HERO SECTION ================= */
@@ -305,7 +223,7 @@ body {
 
 .hero-subtitle {
   margin: 0 0 32px;
-  max-width: 520px;
+  max-width: 580px;
   font-size: 1rem;
   line-height: 1.65;
   color: var(--text-secondary);
@@ -318,13 +236,13 @@ body {
   gap: 12px;
 }
 
-/* ================= APP WORKSPACE (MOCKUP EDITOR) ================= */
+/* ================= APP WORKSPACE ================= */
 .app-section {
   padding: 8px 0 88px;
 }
 
 .app-window {
-  max-width: 920px;
+  max-width: 1040px;
   margin: 0 auto;
   background: #ffffff;
   border: 1px solid var(--border);
@@ -337,8 +255,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 20px;
+  gap: 12px;
+  padding: 12px 16px;
   background: var(--bg-subtle);
   border-bottom: 1px solid var(--border);
 }
@@ -347,6 +265,7 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
+  flex-shrink: 0;
 }
 
 .dot {
@@ -362,16 +281,26 @@ body {
 .app-tabs {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+
+.app-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .app-tab {
+  flex-shrink: 0;
+  white-space: nowrap;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  padding: 7px 14px;
+  padding: 7px 11px;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: 0.83rem;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
@@ -390,6 +319,7 @@ body {
 }
 
 .toolbar-status {
+  flex-shrink: 0;
   font-size: 0.78rem;
   font-weight: 500;
   color: var(--text-secondary);
@@ -459,6 +389,17 @@ body {
   background: #ffffff;
 }
 
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.option-grid-spaced,
+.option-group-spaced {
+  margin-top: 14px;
+}
+
 .option-group {
   display: flex;
   flex-direction: column;
@@ -476,8 +417,10 @@ body {
   max-width: 340px;
 }
 
-.option-group select {
-  max-width: 340px;
+.option-group select,
+.option-group input[type="text"],
+.option-group input[type="password"] {
+  width: 100%;
   padding: 9px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -487,9 +430,58 @@ body {
   background: #ffffff;
 }
 
+.option-group select:focus,
+.option-group input[type="text"]:focus,
+.option-group input[type="password"]:focus {
+  outline: 2px solid #c7d2fe;
+  border-color: var(--accent);
+}
+
+.password-field {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.password-field input {
+  flex: 1;
+  min-width: 0;
+}
+
+.password-field .mini-btn {
+  padding: 0 12px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+#optionsConvert .option-group select {
+  max-width: 360px;
+}
+
 .option-note {
   font-size: 0.82rem;
   color: var(--text-secondary);
+}
+
+.option-note-spaced {
+  margin: 10px 0 0;
 }
 
 /* Daftar File */
@@ -799,7 +791,8 @@ body {
 
 .footer-links {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .footer-links a {
@@ -847,13 +840,13 @@ body {
 }
 
 /* ================= RESPONSIVE ================= */
-@media (max-width: 840px) {
-  .nav-links,
-  .nav-signin,
-  .navbar-right .btn {
+@media (max-width: 960px) {
+  .toolbar-status {
     display: none;
   }
+}
 
+@media (max-width: 840px) {
   .hamburger {
     display: flex;
   }
@@ -861,13 +854,9 @@ body {
   .features-grid {
     grid-template-columns: 1fr;
   }
-
-  .toolbar-status {
-    display: none;
-  }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .hero {
     padding: 48px 0 36px;
   }
@@ -877,11 +866,14 @@ body {
   }
 
   .app-toolbar {
-    flex-wrap: wrap;
-    justify-content: center;
+    padding: 10px 12px;
   }
 
   .window-dots {
     display: none;
+  }
+
+  .option-grid {
+    grid-template-columns: 1fr;
   }
 }
