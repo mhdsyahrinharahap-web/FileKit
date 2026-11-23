@@ -7,6 +7,7 @@
     pdfjs: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
     pdfWorker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js',
     jszip: 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+    jspdf: 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
   };
 
   const loadedScripts = new Map();
@@ -44,6 +45,11 @@
     return window.JSZip;
   }
 
+  async function getJsPdf() {
+    if (!window.jspdf || !window.jspdf.jsPDF) await loadScript(CDN.jspdf);
+    return window.jspdf.jsPDF;
+  }
+
   /* ================= ELEMEN DOM ================= */
   const appTabs = Array.from(document.querySelectorAll('.app-tab'));
   const toolHeading = document.getElementById('toolHeading');
@@ -55,11 +61,33 @@
 
   const optionsCompress = document.getElementById('optionsCompress');
   const optionsMerge = document.getElementById('optionsMerge');
+  const optionsSplit = document.getElementById('optionsSplit');
   const optionsConvert = document.getElementById('optionsConvert');
+  const optionsWatermark = document.getElementById('optionsWatermark');
+  const optionsMetadata = document.getElementById('optionsMetadata');
+  const optionsPassword = document.getElementById('optionsPassword');
 
   const compressQuality = document.getElementById('compressQuality');
   const compressQualityVal = document.getElementById('compressQualityVal');
+  const splitMode = document.getElementById('splitMode');
+  const splitPagesGroup = document.getElementById('splitPagesGroup');
+  const splitPagesInput = document.getElementById('splitPagesInput');
+  const splitPageInfo = document.getElementById('splitPageInfo');
   const convertTarget = document.getElementById('convertTarget');
+
+  const watermarkText = document.getElementById('watermarkText');
+  const watermarkLayout = document.getElementById('watermarkLayout');
+  const watermarkColor = document.getElementById('watermarkColor');
+  const watermarkOpacity = document.getElementById('watermarkOpacity');
+  const watermarkOpacityVal = document.getElementById('watermarkOpacityVal');
+
+  const passwordMode = document.getElementById('passwordMode');
+  const pdfPasswordLabel = document.getElementById('pdfPasswordLabel');
+  const pdfPasswordInput = document.getElementById('pdfPasswordInput');
+  const togglePdfPasswordBtn = document.getElementById('togglePdfPasswordBtn');
+  const encryptOptionsGroup = document.getElementById('encryptOptionsGroup');
+  const allowPrintCheck = document.getElementById('allowPrintCheck');
+  const pdfPasswordNote = document.getElementById('pdfPasswordNote');
 
   const progressArea = document.getElementById('progressArea');
   const progressBar = document.getElementById('progressBar');
@@ -83,6 +111,7 @@
       sub: 'Kecilkan ukuran file JPG, PNG, WebP, atau PDF langsung di perangkatmu.',
       hint: 'Pilih 1 file JPG, PNG, WebP, atau PDF',
       accept: '.jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf',
+      allowedKinds: ['image', 'pdf'],
       multiple: false,
       minFiles: 1,
       cta: 'Kompres Sekarang',
@@ -92,18 +121,60 @@
       sub: 'Satukan beberapa file PDF (atau kumpulan gambar) menjadi satu dokumen PDF utuh.',
       hint: 'Pilih 2 atau lebih file PDF, atau kumpulan gambar JPG/PNG/WebP',
       accept: '.pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp',
+      allowedKinds: ['image', 'pdf'],
       multiple: true,
       minFiles: 2,
       cta: 'Gabungkan',
+    },
+    split: {
+      heading: 'Pisah & Hapus Halaman PDF',
+      sub: 'Ambil rentang halaman tertentu, hapus halaman yang tidak perlu, atau pecah tiap halaman ke ZIP.',
+      hint: 'Pilih 1 file dokumen PDF',
+      accept: '.pdf,application/pdf',
+      allowedKinds: ['pdf'],
+      multiple: false,
+      minFiles: 1,
+      cta: 'Proses PDF',
     },
     convert: {
       heading: 'Konversi Format File',
       sub: 'Ubah Gambar ke PDF, PDF ke Gambar (ZIP), atau tukar format JPG, PNG, dan WebP.',
       hint: 'Pilih 1 atau lebih gambar (JPG/PNG/WebP), atau 1 file PDF',
       accept: '.jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf',
+      allowedKinds: ['image', 'pdf'],
       multiple: true,
       minFiles: 1,
       cta: 'Konversi',
+    },
+    watermark: {
+      heading: 'Pasang Watermark Pengaman',
+      sub: 'Tambahkan teks tanda air transparan pada foto KTP, dokumen scan, gambar, atau PDF langsung di browser.',
+      hint: 'Pilih 1 atau lebih file JPG, PNG, WebP, atau PDF',
+      accept: '.jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf',
+      allowedKinds: ['image', 'pdf'],
+      multiple: true,
+      minFiles: 1,
+      cta: 'Pasang Watermark',
+    },
+    metadata: {
+      heading: 'Hapus Metadata & EXIF',
+      sub: 'Bersihkan koordinat GPS, info perangkat kamera pada foto, dan metadata pembuat pada dokumen PDF.',
+      hint: 'Pilih 1 atau lebih file JPG, PNG, WebP, atau PDF',
+      accept: '.jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf',
+      allowedKinds: ['image', 'pdf'],
+      multiple: true,
+      minFiles: 1,
+      cta: 'Bersihkan Metadata',
+    },
+    password: {
+      heading: 'Kunci & Buka Password PDF',
+      sub: 'Lindungi dokumen PDF dengan kata sandi atau hapus password dari PDF milikmu langsung di browser.',
+      hint: 'Pilih 1 file dokumen PDF',
+      accept: '.pdf,application/pdf',
+      allowedKinds: ['pdf'],
+      multiple: false,
+      minFiles: 1,
+      cta: 'Kunci PDF',
     },
   };
 
@@ -118,7 +189,7 @@
     if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
     const units = ['B', 'KB', 'MB', 'GB'];
     const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-    return `${(bytes / Math.pow(1024, i)).toFixed(i >= 2 ? 2 : 0)} ${units[i]}`;
+    return (bytes / Math.pow(1024, i)).toFixed(i >= 2 ? 2 : 0) + ' ' + units[i];
   }
 
   function stripExt(name) {
@@ -171,7 +242,7 @@
   function setProgress(pct, label) {
     if (!progressArea || !progressBar || !progressText) return;
     progressArea.classList.remove('is-hidden');
-    progressBar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+    progressBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
     progressText.textContent = label;
   }
 
@@ -189,11 +260,60 @@
     }
   }
 
+  function updateSplitModeUI() {
+    if (!splitMode || !splitPagesGroup) return;
+    const isBurst = splitMode.value === 'burst';
+    splitPagesGroup.classList.toggle('is-hidden', isBurst);
+  }
+
+  function updatePasswordModeUI() {
+    if (!passwordMode) return;
+    const isEncrypt = passwordMode.value === 'encrypt';
+    if (pdfPasswordLabel) {
+      pdfPasswordLabel.textContent = isEncrypt ? 'Password Baru untuk PDF' : 'Password PDF Saat Ini';
+    }
+    if (pdfPasswordInput) {
+      pdfPasswordInput.placeholder = isEncrypt
+        ? 'Masukkan kata sandi baru (minimal 4 karakter)'
+        : 'Masukkan password untuk membuka PDF';
+      pdfPasswordInput.autocomplete = isEncrypt ? 'new-password' : 'current-password';
+    }
+    if (encryptOptionsGroup) {
+      encryptOptionsGroup.classList.toggle('is-hidden', !isEncrypt);
+    }
+    if (pdfPasswordNote) {
+      pdfPasswordNote.textContent = isEncrypt
+        ? 'Simpan kata sandi ini baik-baik karena proses berjalan 100% di browser tanpa fitur reset password server.'
+        : 'Masukkan kata sandi dokumen PDF milikmu untuk menyimpan salinan baru yang sudah bebas password.';
+    }
+    if (currentTab === 'password') {
+      actionBtn.textContent = isEncrypt ? 'Kunci PDF' : 'Buka Password PDF';
+    }
+  }
+
+  async function inspectSplitPdf(file) {
+    if (!splitPageInfo) return;
+    splitPageInfo.textContent = 'Membaca jumlah halaman PDF...';
+    try {
+      const PDFLib = await getPdfLib();
+      const bytes = await file.arrayBuffer();
+      const doc = await PDFLib.PDFDocument.load(bytes);
+      const total = doc.getPageCount();
+      splitPageInfo.textContent = 'Total halaman terdeteksi: ' + total + ' halaman.';
+    } catch (err) {
+      splitPageInfo.textContent = 'Gagal membaca struktur PDF. Pastikan file tidak rusak atau dikunci password.';
+      showError('File PDF tidak dapat dibaca atau masih terproteksi password.');
+    }
+  }
+
   /* ================= RENDER DAFTAR FILE ================= */
   function renderFiles() {
     fileList.textContent = '';
     if (files.length === 0) {
       fileList.classList.add('is-hidden');
+      if (currentTab === 'split' && splitPageInfo) {
+        splitPageInfo.textContent = 'Pilih file PDF terlebih dahulu untuk melihat total halaman.';
+      }
       updateActionState();
       return;
     }
@@ -238,7 +358,7 @@
 
       const nameEl = document.createElement('span');
       nameEl.className = 'file-name';
-      nameEl.textContent = canReorder ? `${idx + 1}. ${file.name}` : file.name;
+      nameEl.textContent = canReorder ? (idx + 1) + '. ' + file.name : file.name;
 
       const sizeEl = document.createElement('span');
       sizeEl.className = 'file-size';
@@ -303,8 +423,11 @@
 
     for (const f of list) {
       const info = detectFileKind(f);
-      if (!info) {
-        showError(`Format "${f.name}" tidak didukung. Gunakan JPG, PNG, WebP, atau PDF.`);
+      if (!info || !meta.allowedKinds.includes(info.kind)) {
+        const allowedLabel = meta.allowedKinds.length === 1 && meta.allowedKinds[0] === 'pdf'
+          ? 'PDF'
+          : 'JPG, PNG, WebP, atau PDF';
+        showError('Format "' + f.name + '" tidak didukung di tab ini. Gunakan ' + allowedLabel + '.');
         continue;
       }
       if (!meta.multiple) {
@@ -316,6 +439,10 @@
 
     fileInput.value = '';
     renderFiles();
+
+    if (currentTab === 'split' && files.length === 1) {
+      inspectSplitPdf(files[0]);
+    }
   }
 
   /* ================= HELPER PEMROSESAN GAMBAR & PDF ================= */
@@ -329,7 +456,7 @@
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new Error(`Gagal membaca gambar "${file.name}".`));
+        reject(new Error('Gagal membaca gambar "' + file.name + '".'));
       };
       img.src = url;
     });
@@ -363,6 +490,61 @@
     return blob;
   }
 
+  function parsePageRanges(rawInput, totalPages) {
+    const cleaned = (rawInput || '').trim();
+    if (!cleaned) {
+      throw new Error('Masukkan nomor atau rentang halaman terlebih dahulu (contoh: 1-3, 5).');
+    }
+
+    const parts = cleaned.split(',');
+    const zeroBasedIndices = [];
+
+    for (const part of parts) {
+      const token = part.trim();
+      if (!token) continue;
+
+      if (token.includes('-')) {
+        const bounds = token.split('-');
+        if (bounds.length !== 2) {
+          throw new Error('Format rentang "' + token + '" tidak valid. Gunakan format seperti 1-3.');
+        }
+        const start = Number(bounds[0].trim());
+        const end = Number(bounds[1].trim());
+        if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < 1) {
+          throw new Error('Nomor halaman pada "' + token + '" harus berupa angka bulat positif.');
+        }
+        if (start > end) {
+          throw new Error('Rentang "' + token + '" terbalik. Halaman awal harus lebih kecil dari halaman akhir.');
+        }
+        if (end > totalPages) {
+          throw new Error('Nomor halaman ' + end + ' melebihi total halaman PDF (' + totalPages + ' halaman).');
+        }
+        for (let p = start; p <= end; p++) {
+          zeroBasedIndices.push(p - 1);
+        }
+      } else {
+        const pageNum = Number(token);
+        if (!Number.isInteger(pageNum) || pageNum < 1) {
+          throw new Error('Nomor halaman "' + token + '" tidak valid.');
+        }
+        if (pageNum > totalPages) {
+          throw new Error('Nomor halaman ' + pageNum + ' melebihi total halaman PDF (' + totalPages + ' halaman).');
+        }
+        zeroBasedIndices.push(pageNum - 1);
+      }
+    }
+
+    if (zeroBasedIndices.length === 0) {
+      throw new Error('Tidak ada nomor halaman valid yang ditemukan.');
+    }
+
+    return zeroBasedIndices;
+  }
+
+  function sanitizeWinAnsi(text) {
+    return text.replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '').trim();
+  }
+
   /* ================= FITUR 1: KOMPRES ================= */
   async function handleCompress() {
     const file = files[0];
@@ -378,7 +560,7 @@
       setProgress(100, 'Selesai');
       return {
         blob,
-        filename: `${stripExt(file.name)}_kompres.${ext}`,
+        filename: stripExt(file.name) + '_kompres.' + ext,
         originalSize: file.size,
         finalSize: blob.size,
       };
@@ -395,7 +577,7 @@
 
     try {
       for (let i = 1; i <= totalPages; i++) {
-        setProgress(15 + Math.round((i / totalPages) * 75), `Mengompres halaman ${i} dari ${totalPages}...`);
+        setProgress(15 + Math.round((i / totalPages) * 75), 'Mengompres halaman ' + i + ' dari ' + totalPages + '...');
         const page = await pdfDoc.getPage(i);
         const baseVp = page.getViewport({ scale: 1.0 });
         const vp = page.getViewport({ scale });
@@ -429,7 +611,7 @@
 
     return {
       blob,
-      filename: `${stripExt(file.name)}_kompres.pdf`,
+      filename: stripExt(file.name) + '_kompres.pdf',
       originalSize: file.size,
       finalSize: blob.size,
     };
@@ -446,7 +628,7 @@
       const f = files[i];
       const info = detectFileKind(f);
       totalOrig += f.size;
-      setProgress(15 + Math.round(((i + 1) / files.length) * 75), `Menggabungkan ${f.name}...`);
+      setProgress(15 + Math.round(((i + 1) / files.length) * 75), 'Menggabungkan ' + f.name + '...');
 
       if (info && info.kind === 'pdf') {
         const bytes = await f.arrayBuffer();
@@ -479,7 +661,94 @@
     };
   }
 
-  /* ================= FITUR 3: KONVERSI ================= */
+  /* ================= FITUR 3: PISAH PDF ================= */
+  async function handleSplit() {
+    const file = files[0];
+    const mode = splitMode ? splitMode.value : 'range';
+
+    setProgress(15, 'Memuat dokumen PDF...');
+    const PDFLib = await getPdfLib();
+    const bytes = await file.arrayBuffer();
+    const srcDoc = await PDFLib.PDFDocument.load(bytes);
+    const totalPages = srcDoc.getPageCount();
+
+    if (mode === 'burst') {
+      if (totalPages === 1) {
+        setProgress(80, 'Menyimpan halaman tunggal...');
+        const singleDoc = await PDFLib.PDFDocument.create();
+        const [copied] = await singleDoc.copyPages(srcDoc, [0]);
+        singleDoc.addPage(copied);
+        const outBytes = await singleDoc.save({ useObjectStreams: true });
+        const blob = new Blob([outBytes], { type: 'application/pdf' });
+        return {
+          blob,
+          filename: stripExt(file.name) + '_hal_01.pdf',
+          originalSize: file.size,
+          finalSize: blob.size,
+          detailNote: '1 halaman diekstrak',
+        };
+      }
+
+      const JSZip = await getJsZip();
+      const zip = new JSZip();
+
+      for (let i = 0; i < totalPages; i++) {
+        setProgress(20 + Math.round(((i + 1) / totalPages) * 70), 'Memisahkan halaman ' + (i + 1) + ' dari ' + totalPages + '...');
+        const pageDoc = await PDFLib.PDFDocument.create();
+        const [copied] = await pageDoc.copyPages(srcDoc, [i]);
+        pageDoc.addPage(copied);
+        const pageBytes = await pageDoc.save({ useObjectStreams: true });
+        zip.file(stripExt(file.name) + '_hal_' + String(i + 1).padStart(2, '0') + '.pdf', pageBytes);
+      }
+
+      setProgress(95, 'Membungkus semua halaman ke ZIP...');
+      const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+      return {
+        blob: zipBlob,
+        filename: stripExt(file.name) + '_pisah_' + totalPages + '_hal.zip',
+        originalSize: file.size,
+        finalSize: zipBlob.size,
+        detailNote: totalPages + ' halaman dipecah menjadi file terpisah',
+      };
+    }
+
+    const requestedIndices = parsePageRanges(splitPagesInput ? splitPagesInput.value : '', totalPages);
+    let targetIndices = [];
+
+    if (mode === 'range') {
+      targetIndices = requestedIndices;
+    } else {
+      const removeSet = new Set(requestedIndices);
+      for (let i = 0; i < totalPages; i++) {
+        if (!removeSet.has(i)) {
+          targetIndices.push(i);
+        }
+      }
+      if (targetIndices.length === 0) {
+        throw new Error('Tidak bisa menghapus semua halaman PDF. Sisakan minimal 1 halaman.');
+      }
+    }
+
+    setProgress(60, 'Menyusun ' + targetIndices.length + ' halaman terpilih...');
+    const outDoc = await PDFLib.PDFDocument.create();
+    const copiedPages = await outDoc.copyPages(srcDoc, targetIndices);
+    copiedPages.forEach((p) => outDoc.addPage(p));
+
+    setProgress(90, 'Menyimpan PDF hasil pemisahan...');
+    const outBytes = await outDoc.save({ useObjectStreams: true });
+    const blob = new Blob([outBytes], { type: 'application/pdf' });
+    const suffix = mode === 'remove' ? 'halaman_dihapus' : 'halaman_pilihan';
+
+    return {
+      blob,
+      filename: stripExt(file.name) + '_' + suffix + '.pdf',
+      originalSize: file.size,
+      finalSize: blob.size,
+      detailNote: targetIndices.length + ' dari ' + totalPages + ' halaman disimpan',
+    };
+  }
+
+  /* ================= FITUR 4: KONVERSI ================= */
   async function handleConvert() {
     const target = convertTarget ? convertTarget.value : 'pdf';
     const first = files[0];
@@ -525,7 +794,7 @@
           page.cleanup();
           return {
             blob,
-            filename: `${stripExt(first.name)}_hal1.${target}`,
+            filename: stripExt(first.name) + '_hal1.' + target,
             originalSize: first.size,
             finalSize: blob.size,
           };
@@ -534,7 +803,7 @@
         const JSZip = await getJsZip();
         const zip = new JSZip();
         for (let i = 1; i <= totalPages; i++) {
-          setProgress(15 + Math.round((i / totalPages) * 75), `Merender halaman ${i} dari ${totalPages}...`);
+          setProgress(15 + Math.round((i / totalPages) * 75), 'Merender halaman ' + i + ' dari ' + totalPages + '...');
           const page = await pdfDoc.getPage(i);
           const vp = page.getViewport({ scale: 1.6 });
           const canvas = document.createElement('canvas');
@@ -548,14 +817,14 @@
           canvas.width = 0;
           canvas.height = 0;
           page.cleanup();
-          zip.file(`${stripExt(first.name)}_hal_${String(i).padStart(2, '0')}.${target}`, imgBlob);
+          zip.file(stripExt(first.name) + '_hal_' + String(i).padStart(2, '0') + '.' + target, imgBlob);
         }
 
         setProgress(95, 'Membungkus gambar ke ZIP...');
         const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
         return {
           blob: zipBlob,
-          filename: `${stripExt(first.name)}_gambar.zip`,
+          filename: stripExt(first.name) + '_gambar.zip',
           originalSize: first.size,
           finalSize: zipBlob.size,
         };
@@ -568,11 +837,11 @@
     const outMime = mimeMap[target] || 'image/jpeg';
 
     if (files.length === 1) {
-      setProgress(50, `Mengonversi ke ${target.toUpperCase()}...`);
+      setProgress(50, 'Mengonversi ke ' + target.toUpperCase() + '...');
       const blob = await processImageCanvas(first, outMime, 0.9);
       return {
         blob,
-        filename: `${stripExt(first.name)}.${target}`,
+        filename: stripExt(first.name) + '.' + target,
         originalSize: first.size,
         finalSize: blob.size,
       };
@@ -586,18 +855,486 @@
       const d = detectFileKind(f);
       if (!d || d.kind !== 'image') continue;
       totalOrig += f.size;
-      setProgress(15 + Math.round(((i + 1) / files.length) * 75), `Mengonversi ${f.name}...`);
+      setProgress(15 + Math.round(((i + 1) / files.length) * 75), 'Mengonversi ' + f.name + '...');
       const blob = await processImageCanvas(f, outMime, 0.9);
-      zip.file(`${stripExt(f.name)}.${target}`, blob);
+      zip.file(stripExt(f.name) + '.' + target, blob);
     }
 
     setProgress(95, 'Membungkus hasil ke ZIP...');
     const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
     return {
       blob: zipBlob,
-      filename: `konversi_${target}.zip`,
+      filename: 'konversi_' + target + '.zip',
       originalSize: totalOrig,
       finalSize: zipBlob.size,
+    };
+  }
+
+  /* ================= FITUR 5: WATERMARK PENGAMAN ================= */
+  async function applyImageWatermark(file, info, text, layout, colorHex, opacity01) {
+    const img = await loadImageElement(file);
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    if (info.mime === 'image/jpeg') {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.drawImage(img, 0, 0);
+
+    ctx.save();
+    ctx.globalAlpha = opacity01;
+    ctx.fillStyle = colorHex;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const angleRad = -Math.PI / 6;
+
+    if (layout === 'diagonal') {
+      let fontSize = Math.max(18, Math.round(Math.min(w, h) * 0.065));
+      ctx.font = '700 ' + fontSize + 'px Inter, Arial, sans-serif';
+      const measured = ctx.measureText(text).width;
+      const maxSpan = Math.hypot(w, h) * 0.72;
+      if (measured > maxSpan && measured > 0) {
+        fontSize = Math.max(14, Math.floor(fontSize * (maxSpan / measured)));
+        ctx.font = '700 ' + fontSize + 'px Inter, Arial, sans-serif';
+      }
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(angleRad);
+      ctx.fillText(text, 0, 0);
+    } else {
+      const fontSize = Math.max(14, Math.round(Math.min(w, h) * 0.032));
+      ctx.font = '700 ' + fontSize + 'px Inter, Arial, sans-serif';
+      const textWidth = ctx.measureText(text).width;
+      const stepX = Math.max(textWidth + fontSize * 2.5, w / 2.2);
+      const stepY = Math.max(fontSize * 4.5, h / 3.5);
+
+      for (let y = -h * 0.2; y <= h * 1.2; y += stepY) {
+        for (let x = -w * 0.2; x <= w * 1.2; x += stepX) {
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(angleRad);
+          ctx.fillText(text, 0, 0);
+          ctx.restore();
+        }
+      }
+    }
+
+    ctx.restore();
+
+    const ext = info.mime === 'image/png' ? 'png' : info.mime === 'image/webp' ? 'webp' : 'jpg';
+    const blob = await canvasToBlob(canvas, info.mime, info.mime === 'image/png' ? undefined : 0.92);
+    canvas.width = 0;
+    canvas.height = 0;
+
+    return {
+      blob,
+      filename: stripExt(file.name) + '_watermark.' + ext,
+    };
+  }
+
+  async function applyPdfWatermark(file, text, layout, rgbTuple, opacity01) {
+    const PDFLib = await getPdfLib();
+    const safeText = sanitizeWinAnsi(text);
+    if (!safeText) {
+      throw new Error('Teks watermark pada PDF harus menggunakan huruf atau angka standar.');
+    }
+
+    const bytes = await file.arrayBuffer();
+    const pdfDoc = await PDFLib.PDFDocument.load(bytes);
+    const font = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+    const color = PDFLib.rgb(rgbTuple[0], rgbTuple[1], rgbTuple[2]);
+    const pages = pdfDoc.getPages();
+    const deg = 30;
+    const rad = (deg * Math.PI) / 180;
+
+    pages.forEach((page) => {
+      const { width, height } = page.getSize();
+
+      if (layout === 'diagonal') {
+        let fontSize = Math.max(16, Math.round(Math.min(width, height) * 0.06));
+        let textWidth = font.widthOfTextAtSize(safeText, fontSize);
+        const maxSpan = Math.hypot(width, height) * 0.72;
+        if (textWidth > maxSpan && textWidth > 0) {
+          fontSize = Math.max(12, Math.floor(fontSize * (maxSpan / textWidth)));
+          textWidth = font.widthOfTextAtSize(safeText, fontSize);
+        }
+        const cx = width / 2;
+        const cy = height / 2;
+        const x = cx - (textWidth / 2) * Math.cos(rad) + (fontSize / 3) * Math.sin(rad);
+        const y = cy - (textWidth / 2) * Math.sin(rad) - (fontSize / 3) * Math.cos(rad);
+
+        page.drawText(safeText, {
+          x,
+          y,
+          size: fontSize,
+          font,
+          color,
+          opacity: opacity01,
+          rotate: PDFLib.degrees(deg),
+        });
+      } else {
+        const fontSize = Math.max(11, Math.round(Math.min(width, height) * 0.028));
+        const textWidth = font.widthOfTextAtSize(safeText, fontSize);
+        const stepX = Math.max(textWidth + fontSize * 2.5, width / 2.2);
+        const stepY = Math.max(fontSize * 4.5, height / 3.5);
+
+        for (let cy = height * 0.08; cy <= height * 0.96; cy += stepY) {
+          for (let cx = width * 0.05; cx <= width * 0.95; cx += stepX) {
+            const x = cx - (textWidth / 2) * Math.cos(rad);
+            const y = cy - (textWidth / 2) * Math.sin(rad);
+            page.drawText(safeText, {
+              x,
+              y,
+              size: fontSize,
+              font,
+              color,
+              opacity: opacity01,
+              rotate: PDFLib.degrees(deg),
+            });
+          }
+        }
+      }
+    });
+
+    const outBytes = await pdfDoc.save({ useObjectStreams: true });
+    return {
+      blob: new Blob([outBytes], { type: 'application/pdf' }),
+      filename: stripExt(file.name) + '_watermark.pdf',
+    };
+  }
+
+  async function handleWatermark() {
+    const rawText = watermarkText ? watermarkText.value.trim() : '';
+    if (!rawText) {
+      throw new Error('Masukkan teks watermark terlebih dahulu.');
+    }
+
+    const layout = watermarkLayout ? watermarkLayout.value : 'tiled';
+    const colorKey = watermarkColor ? watermarkColor.value : 'dark';
+    const opacityPct = watermarkOpacity ? Number(watermarkOpacity.value) : 30;
+    const opacity01 = Math.max(0.05, Math.min(0.9, opacityPct / 100));
+
+    const colorMap = {
+      dark: { hex: '#0f172a', rgb: [0.06, 0.09, 0.16] },
+      red: { hex: '#dc2626', rgb: [0.86, 0.15, 0.15] },
+      white: { hex: '#ffffff', rgb: [1, 1, 1] },
+    };
+    const chosenColor = colorMap[colorKey] || colorMap.dark;
+
+    if (files.length === 1) {
+      const f = files[0];
+      const info = detectFileKind(f);
+      setProgress(45, 'Memasang watermark pada ' + f.name + '...');
+      const out = info.kind === 'pdf'
+        ? await applyPdfWatermark(f, rawText, layout, chosenColor.rgb, opacity01)
+        : await applyImageWatermark(f, info, rawText, layout, chosenColor.hex, opacity01);
+
+      return {
+        blob: out.blob,
+        filename: out.filename,
+        originalSize: f.size,
+        finalSize: out.blob.size,
+        detailNote: 'Watermark berhasil diterapkan di browser',
+      };
+    }
+
+    const JSZip = await getJsZip();
+    const zip = new JSZip();
+    let totalOrig = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const info = detectFileKind(f);
+      totalOrig += f.size;
+      setProgress(
+        15 + Math.round(((i + 1) / files.length) * 75),
+        'Memasang watermark (' + (i + 1) + '/' + files.length + '): ' + f.name + '...'
+      );
+
+      const out = info.kind === 'pdf'
+        ? await applyPdfWatermark(f, rawText, layout, chosenColor.rgb, opacity01)
+        : await applyImageWatermark(f, info, rawText, layout, chosenColor.hex, opacity01);
+
+      zip.file(out.filename, out.blob);
+    }
+
+    setProgress(95, 'Membungkus hasil ke ZIP...');
+    const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+    return {
+      blob: zipBlob,
+      filename: 'watermark_filekit.zip',
+      originalSize: totalOrig,
+      finalSize: zipBlob.size,
+      detailNote: files.length + ' file diberi watermark',
+    };
+  }
+
+  /* ================= FITUR 6: HAPUS METADATA & EXIF ================= */
+  async function stripSingleFileMetadata(file, info) {
+    if (info.kind === 'image') {
+      const ext = info.mime === 'image/png' ? 'png' : info.mime === 'image/webp' ? 'webp' : 'jpg';
+      const blob = await processImageCanvas(file, info.mime, 0.94);
+      return {
+        blob,
+        filename: stripExt(file.name) + '_bersih.' + ext,
+        summary: 'Header EXIF, lokasi GPS, dan info perangkat dibersihkan',
+      };
+    }
+
+    const PDFLib = await getPdfLib();
+    const bytes = await file.arrayBuffer();
+    const srcDoc = await PDFLib.PDFDocument.load(bytes);
+
+    const foundFields = [];
+    if (srcDoc.getTitle()) foundFields.push('Title');
+    if (srcDoc.getAuthor()) foundFields.push('Author');
+    if (srcDoc.getSubject()) foundFields.push('Subject');
+    if (srcDoc.getCreator()) foundFields.push('Creator');
+    if (srcDoc.getProducer()) foundFields.push('Producer');
+
+    const cleanDoc = await PDFLib.PDFDocument.create();
+    const copiedPages = await cleanDoc.copyPages(srcDoc, srcDoc.getPageIndices());
+    copiedPages.forEach((p) => cleanDoc.addPage(p));
+
+    cleanDoc.setTitle('');
+    cleanDoc.setAuthor('');
+    cleanDoc.setSubject('');
+    cleanDoc.setKeywords([]);
+    cleanDoc.setProducer('');
+    cleanDoc.setCreator('');
+
+    const outBytes = await cleanDoc.save({ useObjectStreams: true });
+    const summary = foundFields.length > 0
+      ? 'Metadata PDF dibersihkan (' + foundFields.join(', ') + ')'
+      : 'Dokumen PDF disalin ulang tanpa metadata identitas';
+
+    return {
+      blob: new Blob([outBytes], { type: 'application/pdf' }),
+      filename: stripExt(file.name) + '_bersih.pdf',
+      summary,
+    };
+  }
+
+  async function handleMetadata() {
+    if (files.length === 1) {
+      const f = files[0];
+      const info = detectFileKind(f);
+      setProgress(45, 'Membersihkan metadata ' + f.name + '...');
+      const out = await stripSingleFileMetadata(f, info);
+      return {
+        blob: out.blob,
+        filename: out.filename,
+        originalSize: f.size,
+        finalSize: out.blob.size,
+        detailNote: out.summary,
+      };
+    }
+
+    const JSZip = await getJsZip();
+    const zip = new JSZip();
+    let totalOrig = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const info = detectFileKind(f);
+      totalOrig += f.size;
+      setProgress(
+        15 + Math.round(((i + 1) / files.length) * 75),
+        'Membersihkan (' + (i + 1) + '/' + files.length + '): ' + f.name + '...'
+      );
+      const out = await stripSingleFileMetadata(f, info);
+      zip.file(out.filename, out.blob);
+    }
+
+    setProgress(95, 'Membungkus hasil ke ZIP...');
+    const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+    return {
+      blob: zipBlob,
+      filename: 'bersih_metadata_filekit.zip',
+      originalSize: totalOrig,
+      finalSize: zipBlob.size,
+      detailNote: 'Metadata pada ' + files.length + ' file telah dibersihkan',
+    };
+  }
+
+  /* ================= FITUR 7: PASSWORD PDF (KUNCI & BUKA) ================= */
+  async function handlePassword() {
+    const file = files[0];
+    const mode = passwordMode ? passwordMode.value : 'encrypt';
+    const pwd = pdfPasswordInput ? pdfPasswordInput.value : '';
+
+    if (mode === 'encrypt') {
+      if (!pwd) {
+        throw new Error('Masukkan kata sandi baru untuk mengunci file PDF.');
+      }
+      if (pwd.length < 4) {
+        throw new Error('Gunakan kata sandi minimal 4 karakter agar dokumen lebih aman.');
+      }
+
+      setProgress(10, 'Memuat modul enkripsi PDF...');
+      const [pdfjsLib, JsPDF] = await Promise.all([getPdfJs(), getJsPdf()]);
+      const buffer = await file.arrayBuffer();
+
+      let pdfDoc;
+      try {
+        pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+      } catch (err) {
+        if (err && err.name === 'PasswordException') {
+          throw new Error('File PDF ini sudah dikunci password. Pilih mode "Buka / Hapus Password PDF" terlebih dahulu.');
+        }
+        throw err;
+      }
+
+      const totalPages = pdfDoc.numPages;
+      const allowPrint = allowPrintCheck ? allowPrintCheck.checked : true;
+      const permissions = allowPrint ? ['print'] : [];
+      let outPdf = null;
+
+      try {
+        for (let i = 1; i <= totalPages; i++) {
+          setProgress(15 + Math.round((i / totalPages) * 75), 'Mengenkripsi halaman ' + i + ' dari ' + totalPages + '...');
+          const page = await pdfDoc.getPage(i);
+          const baseVp = page.getViewport({ scale: 1.0 });
+          const vp = page.getViewport({ scale: 1.5 });
+          const orient = baseVp.width > baseVp.height ? 'landscape' : 'portrait';
+
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.floor(vp.width));
+          canvas.height = Math.max(1, Math.floor(vp.height));
+          const ctx = canvas.getContext('2d', { alpha: false });
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          await page.render({ canvasContext: ctx, viewport: vp }).promise;
+          const imgData = canvas.toDataURL('image/jpeg', 0.9);
+          canvas.width = 0;
+          canvas.height = 0;
+          page.cleanup();
+
+          if (i === 1) {
+            outPdf = new JsPDF({
+              orientation: orient,
+              unit: 'pt',
+              format: [baseVp.width, baseVp.height],
+              encryption: {
+                userPassword: pwd,
+                ownerPassword: pwd + '_filekit_owner',
+                userPermissions: permissions,
+              },
+            });
+          } else {
+            outPdf.addPage([baseVp.width, baseVp.height], orient);
+          }
+
+          outPdf.addImage(imgData, 'JPEG', 0, 0, baseVp.width, baseVp.height);
+        }
+      } finally {
+        await pdfDoc.destroy();
+      }
+
+      setProgress(95, 'Menyimpan PDF terenkripsi...');
+      const outBlob = outPdf.output('blob');
+      return {
+        blob: outBlob,
+        filename: stripExt(file.name) + '_terkunci.pdf',
+        originalSize: file.size,
+        finalSize: outBlob.size,
+        detailNote: 'PDF dikunci dengan password (' + totalPages + ' halaman)',
+      };
+    }
+
+    // Mode: Buka / Hapus Password PDF
+    setProgress(10, 'Memuat modul dekripsi PDF...');
+    const [PDFLib, pdfjsLib] = await Promise.all([getPdfLib(), getPdfJs()]);
+    const buffer = await file.arrayBuffer();
+
+    // Cek jika PDF hanya dikunci izin edit/print tanpa sandi buka
+    if (!pwd) {
+      try {
+        const probeDoc = await PDFLib.PDFDocument.load(buffer, { ignoreEncryption: true });
+        if (!probeDoc.isEncrypted) {
+          throw new Error('File PDF ini tidak dikunci password.');
+        }
+        setProgress(65, 'Menghapus batasan izin dokumen...');
+        const cleanDoc = await PDFLib.PDFDocument.create();
+        const copied = await cleanDoc.copyPages(probeDoc, probeDoc.getPageIndices());
+        copied.forEach((p) => cleanDoc.addPage(p));
+        const outBytes = await cleanDoc.save({ useObjectStreams: true });
+        const blob = new Blob([outBytes], { type: 'application/pdf' });
+        return {
+          blob,
+          filename: stripExt(file.name) + '_terbuka.pdf',
+          originalSize: file.size,
+          finalSize: blob.size,
+          detailNote: 'Batasan izin PDF berhasil dihapus (' + copied.length + ' halaman)',
+        };
+      } catch (err) {
+        if (err instanceof Error && err.message === 'File PDF ini tidak dikunci password.') {
+          throw err;
+        }
+        throw new Error('File PDF ini memerlukan kata sandi untuk dibuka. Masukkan password PDF terlebih dahulu.');
+      }
+    }
+
+    let pdfDoc;
+    try {
+      pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer), password: pwd }).promise;
+    } catch (err) {
+      if (err && err.name === 'PasswordException') {
+        throw new Error('Password PDF salah. Periksa kembali huruf besar/kecil kata sandi kamu.');
+      }
+      throw new Error('Gagal membuka file PDF. Pastikan file tidak rusak.');
+    }
+
+    const totalPages = pdfDoc.numPages;
+    const unlockedPdf = await PDFLib.PDFDocument.create();
+
+    try {
+      for (let i = 1; i <= totalPages; i++) {
+        setProgress(15 + Math.round((i / totalPages) * 75), 'Membuka halaman ' + i + ' dari ' + totalPages + '...');
+        const page = await pdfDoc.getPage(i);
+        const baseVp = page.getViewport({ scale: 1.0 });
+        const vp = page.getViewport({ scale: 1.6 });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.floor(vp.width));
+        canvas.height = Math.max(1, Math.floor(vp.height));
+        const ctx = canvas.getContext('2d', { alpha: false });
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        const jpegBlob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
+        const jpegBytes = await jpegBlob.arrayBuffer();
+
+        canvas.width = 0;
+        canvas.height = 0;
+        page.cleanup();
+
+        const embedded = await unlockedPdf.embedJpg(jpegBytes);
+        const newPage = unlockedPdf.addPage([baseVp.width, baseVp.height]);
+        newPage.drawImage(embedded, { x: 0, y: 0, width: baseVp.width, height: baseVp.height });
+      }
+    } finally {
+      await pdfDoc.destroy();
+    }
+
+    setProgress(95, 'Menyimpan PDF tanpa password...');
+    const outBytes = await unlockedPdf.save({ useObjectStreams: true });
+    const blob = new Blob([outBytes], { type: 'application/pdf' });
+
+    return {
+      blob,
+      filename: stripExt(file.name) + '_terbuka.pdf',
+      originalSize: file.size,
+      finalSize: blob.size,
+      detailNote: 'Password PDF berhasil dihapus (' + totalPages + ' halaman)',
     };
   }
 
@@ -624,7 +1361,18 @@
 
     if (optionsCompress) optionsCompress.classList.toggle('is-hidden', tabKey !== 'compress');
     if (optionsMerge) optionsMerge.classList.toggle('is-hidden', tabKey !== 'merge');
+    if (optionsSplit) optionsSplit.classList.toggle('is-hidden', tabKey !== 'split');
     if (optionsConvert) optionsConvert.classList.toggle('is-hidden', tabKey !== 'convert');
+    if (optionsWatermark) optionsWatermark.classList.toggle('is-hidden', tabKey !== 'watermark');
+    if (optionsMetadata) optionsMetadata.classList.toggle('is-hidden', tabKey !== 'metadata');
+    if (optionsPassword) optionsPassword.classList.toggle('is-hidden', tabKey !== 'password');
+
+    if (tabKey === 'split') {
+      updateSplitModeUI();
+    }
+    if (tabKey === 'password') {
+      updatePasswordModeUI();
+    }
 
     renderFiles();
   }
@@ -640,7 +1388,32 @@
 
   if (compressQuality && compressQualityVal) {
     compressQuality.addEventListener('input', () => {
-      compressQualityVal.textContent = `${compressQuality.value}%`;
+      compressQualityVal.textContent = compressQuality.value + '%';
+    });
+  }
+
+  if (splitMode) {
+    splitMode.addEventListener('change', updateSplitModeUI);
+  }
+
+  if (watermarkOpacity && watermarkOpacityVal) {
+    watermarkOpacity.addEventListener('input', () => {
+      watermarkOpacityVal.textContent = watermarkOpacity.value + '%';
+    });
+  }
+
+  if (passwordMode) {
+    passwordMode.addEventListener('change', () => {
+      clearFeedback();
+      updatePasswordModeUI();
+    });
+  }
+
+  if (togglePdfPasswordBtn && pdfPasswordInput) {
+    togglePdfPasswordBtn.addEventListener('click', () => {
+      const showing = pdfPasswordInput.type === 'text';
+      pdfPasswordInput.type = showing ? 'password' : 'text';
+      togglePdfPasswordBtn.textContent = showing ? 'Tampilkan' : 'Sembunyikan';
     });
   }
 
@@ -688,7 +1461,11 @@
       let res;
       if (currentTab === 'compress') res = await handleCompress();
       else if (currentTab === 'merge') res = await handleMerge();
-      else res = await handleConvert();
+      else if (currentTab === 'split') res = await handleSplit();
+      else if (currentTab === 'convert') res = await handleConvert();
+      else if (currentTab === 'watermark') res = await handleWatermark();
+      else if (currentTab === 'metadata') res = await handleMetadata();
+      else res = await handlePassword();
 
       revokeBlob();
       activeBlobUrl = URL.createObjectURL(res.blob);
@@ -700,12 +1477,13 @@
       const saved = Math.max(0, res.originalSize - res.finalSize);
       const pct = res.originalSize > 0 ? ((saved / res.originalSize) * 100).toFixed(1) : '0.0';
 
-      if (resultTitle) resultTitle.textContent = `Siap diunduh: ${res.filename}`;
+      if (resultTitle) resultTitle.textContent = 'Siap diunduh: ' + res.filename;
       if (resultMeta) {
-        resultMeta.textContent =
+        const sizeSummary =
           saved > 0
-            ? `Ukuran awal ${formatBytes(res.originalSize)} -> ${formatBytes(res.finalSize)} (hemat ${pct}%)`
-            : `Ukuran awal ${formatBytes(res.originalSize)} -> hasil ${formatBytes(res.finalSize)}`;
+            ? 'Ukuran awal ' + formatBytes(res.originalSize) + ' -> ' + formatBytes(res.finalSize) + ' (hemat ' + pct + '%)'
+            : 'Ukuran awal ' + formatBytes(res.originalSize) + ' -> hasil ' + formatBytes(res.finalSize);
+        resultMeta.textContent = res.detailNote ? res.detailNote + ' | ' + sizeSummary : sizeSummary;
       }
       if (resultBox) resultBox.classList.remove('is-hidden');
     } catch (err) {
@@ -734,7 +1512,7 @@
       if (!answer) return;
       const isHidden = answer.classList.toggle('is-hidden');
       btn.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
-      if (plus) plus.textContent = isHidden ? '+' : '−';
+      if (plus) plus.textContent = isHidden ? '+' : '-';
     });
   });
 
